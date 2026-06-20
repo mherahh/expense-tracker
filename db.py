@@ -56,6 +56,7 @@ class BudgetDB(BaseDB):
                             CREATE TABLE IF NOT EXISTS budget(
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             amount INTEGER DEFAULT 0,
+                            original_amount INTEGER DEFAULT 0,
                             month TEXT
                             )
                             """)
@@ -67,9 +68,9 @@ class BudgetDB(BaseDB):
         exists = self.cursor.fetchone()
         
         if exists:
-            self.cursor.execute("UPDATE budget SET amount=? WHERE month=?",(amount,month))
+            self.cursor.execute("UPDATE budget SET amount=?, original_amount=? WHERE month=?",(amount,amount,month))
         else:
-            self.cursor.execute("INSERT INTO budget (amount, month) VALUES  (?, ?)", (amount, month))
+            self.cursor.execute("INSERT INTO budget (amount, original_amount, month) VALUES  (?, ?, ?)", (amount, amount, month))
         
         self.commit()
 
@@ -81,13 +82,22 @@ class BudgetDB(BaseDB):
             return (0,)
         return result
     
+    def get_og_budget(self, month):
+        self.cursor.execute(
+            "SELECT original_amount FROM budget WHERE month=?",(month,)
+        )
+        result = self.cursor.fetchone()
+        if result is None:
+            return (0,)
+        return result
+    
     def update_budget_amount(self, month, money,increase=False):
         if increase:
             self.cursor.execute("UPDATE budget SET amount = amount + ? WHERE month=?", (money,month))
         else:
             self.cursor.execute("UPDATE budget SET amount = amount - ? WHERE month=?", (money,month))
         self.commit()
-        print("Budget updated")
+       
 
 
 
